@@ -9,7 +9,7 @@ from itertools import cycle
 
 
 
-dat_dir = "C:/Users/baage/Documents/mycodes/gns-uncertain/data/"
+dat_dir = "./data/"
 filenames = ["eval-0kto2600k.pkl",
              "eval-2600kto3500k.pkl",
              "eval-3500kto5900k.pkl",
