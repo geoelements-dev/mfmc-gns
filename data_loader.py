@@ -68,7 +68,8 @@ def get_pkl_data(path):
 
 
 
-a = get_pkl_data("/work2/08264/baagee/frontera/gns-mpm-data/gns-data/rollouts/sand2d_frictions-sr020/rollout_step7020000_mfmc-a069--1_ex0.pkl")
+# a = get_pkl_data("/work2/08264/baagee/frontera/gns-mpm-data/gns-data/rollouts/sand2d_frictions-sr020/rollout_step7020000_mfmc-a069--1_ex0.pkl")
+a = get_pkl_data(".data/rollout_step7020000_mfmc-a069--1_ex0.pkl")
 
 
 
