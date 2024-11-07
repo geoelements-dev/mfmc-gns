@@ -12,7 +12,12 @@ from gns.gns import train
 from gns.example.inverse_problem.forward import rollout_with_checkpointing
 from metrics import hausdorff_distance, chamfer_distance, wassterstein_metric
 
+plot_step = 2 
+noise_std = 6.7e-4
 TACC_MODE = False
+input_sequence_length = 6
+epochs = np.arange(0, 2000000, 100000) #(2000000, 6000000, 100000)
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 if TACC_MODE:
     output_dir = '/work2/08264/baagee/frontera/mfmc-gns/outputs/'
@@ -28,13 +33,6 @@ else:
 output_file = 'rp_eval_0_to_2000k.pkl' #'eval_new_format-time.pkl' # 'rp_eval_0_to_2000k.pkl' 
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)
-
-# Simulator configs
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-epochs = np.arange(0, 2000000, 100000) #(2000000, 6000000, 100000)
-plot_step = 2 
-noise_std = 6.7e-4
-INPUT_SEQUENCE_LENGTH = 6
 
 # Get ground truth data paths
 aspect_ratio_ids = ["027", "046", "054", "069", "082"]
@@ -90,7 +88,7 @@ for i, epoch in enumerate(epochs):
                 particle_types=data["particle_type"].to(device),
                 material_property=data["material_property"].to(device),
                 n_particles_per_example=data["n_particles_per_example"],
-                nsteps=sequence_length - INPUT_SEQUENCE_LENGTH  # exclude initial positions (x0) which we already have
+                nsteps=sequence_length - input_sequence_length  # exclude initial positions (x0) which we already have
             )
         t_rollout_end = time.time()
         t_rollout = t_rollout_end - t_rollout_start
