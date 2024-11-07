@@ -1,41 +1,44 @@
-import torch
 import os
+import time
+import torch
+import pickle
+import data_loader
+import numpy as np
+from tqdm import tqdm
+from matplotlib import pyplot as plt
+
 from gns.gns import reading_utils
 from gns.gns import train
-
 from gns.example.inverse_problem.forward import rollout_with_checkpointing
-import data_loader
-import pickle
-from tqdm import tqdm
-import time
-import numpy as np
-from matplotlib import pyplot as plt
 from metrics import hausdorff_distance, chamfer_distance, wassterstein_metric
 
-# output_dir = '/work2/08264/baagee/frontera/mfmc-gns/outputs/'
-output_dir = './outputs'
+TACC_MODE = False
+
+if TACC_MODE:
+    output_dir = '/work2/08264/baagee/frontera/mfmc-gns/outputs/'
+    simulator_metadata_path = ' /corral/utexas/Material-Point-Metho/baagee/frontera/gns-mpm-data/gns-data/datasets/sand2d_frictions-sr020/'
+    model_path = ' /corral/utexas/Material-Point-Metho/baagee/frontera/gns-mpm-data/gns-data/models/sand2d_frictions-sr020/'
+    data_dir = "/corral/utexas/Material-Point-Metho/baagee/frontera/gns-mpm-data/mpm/mfmc/"
+else:
+    output_dir = './outputs'
+    simulator_metadata_path = './gns-mpm-data/gns-data/datasets/sand2d_frictions-sr020/'
+    model_path = './gns-mpm-data/gns-data/models/sand2d_frictions-sr020/'
+    data_dir = "./gns-mpm-data/mpm/mfmc"
+
 output_file = 'rp_eval_0_to_2000k.pkl' #'eval_new_format-time.pkl' # 'rp_eval_0_to_2000k.pkl' 
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)
 
 # Simulator configs
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-# simulator_metadata_path = ' /corral/utexas/Material-Point-Metho/baagee/frontera/gns-mpm-data/gns-data/datasets/sand2d_frictions-sr020/'
-simulator_metadata_path = './gns-mpm-data/gns-data/datasets/sand2d_frictions-sr020/'
-# model_path = ' /corral/utexas/Material-Point-Metho/baagee/frontera/gns-mpm-data/gns-data/models/sand2d_frictions-sr020/'
-model_path = './gns-mpm-data/gns-data/models/sand2d_frictions-sr020/'
-# data_dir = "/corral/utexas/Material-Point-Metho/baagee/frontera/gns-mpm-data/mpm/mfmc/"
-data_dir = "./gns-mpm-data/mpm/mfmc"
-
 epochs = np.arange(0, 2000000, 100000) #(2000000, 6000000, 100000)
-plot_step = 2  # plot interval while evaluating through epochs
+plot_step = 2 
 noise_std = 6.7e-4
 INPUT_SEQUENCE_LENGTH = 6
 
 # Get ground truth data paths
-aspect_ratio_ids = ["027", "046", "054", "069", "082"] #["027", "046"]
-friction_ids = [0, 2, 3, 4, 5]  # [(0, 15), (1, 17.5), (2, 22.5), (3, 30), (4, 37.5), (5, 45)]  # id-friction pare
+aspect_ratio_ids = ["027", "046", "054", "069", "082"]
+friction_ids = [0, 2, 3, 4, 5]  # [(0, 15), (1, 17.5), (2, 22.5), (3, 30), (4, 37.5), (5, 45)]  # id-friction pairs
 true_npz_files = []
 for friction_id in friction_ids:
     for a_id in aspect_ratio_ids:
@@ -43,26 +46,19 @@ for friction_id in friction_ids:
         true_npz_files.append(true_npz_file)
 
 # Get ground truth values
-true_data_holder = {"aspect_ratio": [], "friction": [], "runout_true": [], "positions": [], "particle_type": [],
+true_data_holder = {"aspect_ratio": [], "friction": [], "runout_true": [], 
+                    "positions": [], "particle_type": [],
                     "material_property": [], "n_particles_per_example": []}
-print(list(true_data_holder.keys()))
 for i, file_path in enumerate(true_npz_files):
     current_data = data_loader.get_npz_data(file_path, option="runout_only")
-    # print("Current data keys: ", list(current_data.keys()))
     for key in list(true_data_holder.keys())[:3]:
-        # print("Looping key: ", key)
-        # print(true_data_holder[f"{key}"])
         true_data_holder[f"{key}"].append(current_data[f"{key}"])
     current_data_pos = data_loader.get_npz_data(file_path, option="entire_data")
     for key in list(true_data_holder.keys())[3:]:
-        # print("Looping key 2: ", key)
-        # print(true_data_holder[f"{key}"])
         true_data_holder[f"{key}"].append(current_data_pos[f"{key}"])
 
 # Make dict to save the rollout analysis result
 data_holder = {}
-
-# Evaluate the values for epochs
 for i, epoch in enumerate(epochs):
 
     print(f"Current epoch {epoch}")
