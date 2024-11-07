@@ -1,3 +1,5 @@
 data/*.pkl
 *.png
 gns-mpm-data/
+.DS_Store
+__pycache__/
