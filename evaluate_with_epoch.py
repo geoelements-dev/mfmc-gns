@@ -165,17 +165,17 @@ if not os.path.exists(output_dir):
 # Simulator configs
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # simulator_metadata_path = ' /corral/utexas/Material-Point-Metho/baagee/frontera/gns-mpm-data/gns-data/datasets/sand2d_frictions-sr020/'
-simulator_metadata_path = '../sand2d_frictions-sr020/'
+simulator_metadata_path = './gns-mpm-data/gns-data/datasets/sand2d_frictions-sr020/'
 noise_std = 6.7e-4
 # model_path = ' /corral/utexas/Material-Point-Metho/baagee/frontera/gns-mpm-data/gns-data/models/sand2d_frictions-sr020/'
-model_path = '../sand2d_frictions-sr020/'
+model_path = './gns-mpm-data/gns-data/models/sand2d_frictions-sr020/'
 INPUT_SEQUENCE_LENGTH = 6
 
 # Get ground truth data paths
 aspect_ratio_ids = ["027", "046", "054", "069", "082"]
 # aspect_ratio_ids = ["027", "046"]
 # data_dir = "/corral/utexas/Material-Point-Metho/baagee/frontera/gns-mpm-data/mpm/mfmc/"
-data_dir = "../sand2d_frictions-sr020"
+data_dir = "./gns-mpm-data/mpm/mfmc"
 friction_ids = [0, 2, 3, 4, 5]  # [(0, 15), (1, 17.5), (2, 22.5), (3, 30), (4, 37.5), (5, 45)]  # id-friction pare
 # for friction_id in [0, 2, 3, 4, 5]:
 true_npz_files = []
