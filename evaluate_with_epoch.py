@@ -51,9 +51,9 @@ true_data_holder = {"aspect_ratio": [], "friction": [], "runout_true": [],
                     "material_property": [], "n_particles_per_example": []}
 for i, file_path in enumerate(true_npz_files):
     current_data = data_loader.get_npz_data(file_path, option="runout_only")
+    current_data_pos = data_loader.get_npz_data(file_path, option="entire_data")
     for key in list(true_data_holder.keys())[:3]:
         true_data_holder[f"{key}"].append(current_data[f"{key}"])
-    current_data_pos = data_loader.get_npz_data(file_path, option="entire_data")
     for key in list(true_data_holder.keys())[3:]:
         true_data_holder[f"{key}"].append(current_data_pos[f"{key}"])
 
@@ -75,14 +75,11 @@ for i, epoch in enumerate(epochs):
     simulator.eval()
     print("simulator loaded")
 
-    # For all datapoints:
     t_rollouts = []
     pred_runouts = []
     pred_positions = [] 
     for true_npz_file in true_npz_files:
         data = data_loader.get_npz_data(true_npz_file, option="entire_data")
-
-        # Rollout
         sequence_length = data["positions"].shape[1]
         # Forward evaluation for runout with selected data point (aspect ratios & frictions)
         t_rollout_start = time.time()
@@ -99,15 +96,8 @@ for i, epoch in enumerate(epochs):
         t_rollout = t_rollout_end - t_rollout_start
         t_rollouts.append(t_rollout)
 
-        # A note on the shape of predicted positions below: it has dimensions (time, nparticles, dim).
-        # So the runout here as indexed by [-1,:,0] is the x distance of each particle at the final timestep. 
-
-        # Get necessary values
-        pred_runout = predicted_positions[-1, :, 0].max().item()
+        pred_runout = predicted_positions[-1, :, 0].max().item() # predicted_positions.shape = (time, nparticles, dim)
         pred_runouts.append(pred_runout)
-
-        #Save the predictied positions as well, in the necessary format.
-        #We index :2 to get the x and y coordinate of the positions -- this should be changed if we want 3D  positions.
         pred_positions.append(predicted_positions[-1, :, :2].detach().cpu())
 
     # Save data
@@ -128,13 +118,6 @@ for i, epoch in enumerate(epochs):
         "wasser_euclidean": wassterstein_metric(pred_positions, true_positions_permuted)
     }
 
-    print("Positions shape:")
-    print(pred_positions, len(pred_positions))
-    # print(true_data_holder["positions"], len(true_data_holder["positions"]))
-
-    # NOTE: true_positions need to be permuted and reshaped when calculating distances here, but we store the whole data.
-
-    # Save pred-true runout plot
     if i % plot_step == 0:
         fig, ax = plt.subplots()
         ax.plot(np.linspace(0, 2, 100), np.linspace(0, 2, 100), color="black")
@@ -148,9 +131,7 @@ for i, epoch in enumerate(epochs):
         ax.set_aspect("equal")
         ax.set_title(f"rho = {data_holder[f'epoch-{epoch}']['correlation']}")
         plt.savefig(f"{output_dir}/epoch-{epoch}.png")
-
-
-    # Save current data_holder
+        
     with open(f"{output_dir}/{output_file}", 'wb') as file:
         pickle.dump(data_holder, file)
         print(f"File saved to {output_dir}/{file}")
