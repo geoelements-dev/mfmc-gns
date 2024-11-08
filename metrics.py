@@ -1,3 +1,5 @@
+import torch 
+import numpy as np
 
 #Define distance loss metrics to calculate corrcoefs with
 def chamfer_distance(points_a, points_b):
