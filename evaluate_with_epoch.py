@@ -10,16 +10,15 @@ from matplotlib import pyplot as plt
 from gns.gns import reading_utils
 from gns.gns import train
 from gns.example.inverse_problem.forward import rollout_with_checkpointing
-from metrics import hausdorff_distance, chamfer_distance, wassterstein_metric
 
 plot_step = 2 
 noise_std = 6.7e-4
-TACC_MODE = False
+CORRAL_MODE = False
 input_sequence_length = 6
 epochs = np.arange(0, 2000000, 100000) #(2000000, 6000000, 100000)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-if TACC_MODE:
+if CORRAL_MODE:
     output_dir = '/work2/08264/baagee/frontera/mfmc-gns/outputs/'
     simulator_metadata_path = ' /corral/utexas/Material-Point-Metho/baagee/frontera/gns-mpm-data/gns-data/datasets/sand2d_frictions-sr020/'
     model_path = ' /corral/utexas/Material-Point-Metho/baagee/frontera/gns-mpm-data/gns-data/models/sand2d_frictions-sr020/'
@@ -99,8 +98,6 @@ for i, epoch in enumerate(epochs):
         pred_positions.append(predicted_positions[-1, :, :2].detach().cpu())
 
     # Save data
-    true_positions_permuted = [true_data_holder["positions"][i].permute(1,0,2)[-1,:,:2].detach().cpu() for i in range(len(true_data_holder["positions"]))]
-    print(true_positions_permuted[0].shape)
     data_holder[f"epoch-{epoch}"] = {
         "epoch": epoch,
         "t_rollouts": t_rollouts,
@@ -110,10 +107,7 @@ for i, epoch in enumerate(epochs):
         "true_rounouts": true_data_holder["runout_true"],
         "pred_positions": pred_positions,
         "true_positions": true_data_holder["positions"],
-        "correlation": np.corrcoef(pred_runouts, true_data_holder["runout_true"])[0, 1],
-        "hausdorff_euclidean": hausdorff_distance(pred_positions, true_positions_permuted),
-        "chamfer_euclidean": chamfer_distance(pred_positions, true_positions_permuted),
-        "wasser_euclidean": wassterstein_metric(pred_positions, true_positions_permuted)
+        "correlation": np.corrcoef(pred_runouts, true_data_holder["runout_true"])[0, 1]
     }
 
     if i % plot_step == 0:
