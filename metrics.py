@@ -138,3 +138,59 @@ def wassterstein_metric(points_a, points_b, p=2):
     # wasser_dist = torch.mean(torch.abs(a_dist_sorted - b_dist_sorted))
 
     # return wasser_dist
+
+def center_of_mass(points):
+    '''Takes in an array of points and returns the 2-norm of the center of mass.
+    We assume equally weighted points for this calculation -- can add weighting func later.'''
+
+    print("COM input array shape: ", np.shape(points))
+    center = [np.mean(points[:,0]), np.mean(points[:,1])]
+    print("Center", center)
+
+    return np.sqrt(center[0]**2 + center[1]**2)
+
+def get_velocities(points):
+    '''Takes in a time evolution of points as a tensor (ntime, nparticles, 2).
+    Returns the velocities calculated by finite difference, with the first set at zero.'''
+
+    v = np.zeros(points.shape)
+    dt = 1/points.shape[0]
+    v[1:,:, :] = (points[1:,:,:] - points[:-1,:,:]) / dt
+
+    return v
+
+def delta_E(initial_points, final_points):
+    '''Takes in two numpy arrays of points corresponding to initial and final positions.
+    Returns the dissipation: taking delta_E as mgh_0 - mgh_f, this should be equal to KE plus dissipation.'''
+
+    #This really returns h0 - hf, where h is the sum of the y positions of all points.
+
+    #we ignore m and g here as they are constants.
+    pe_0 = np.sum(initial_points[:,1], axis=-1)
+    pe_f = np.sum(final_points[:,1], axis=-1)
+
+
+    return pe_0 - pe_f
+
+def kinetic_energy(positions_over_time):
+    '''Input: a time evolution of particles.
+    Output: kinetic energy of the particles, where for now we take mass to be unit.'''
+
+    velos = get_velocities(positions_over_time)
+    #Recall that the shape of positions_over_time will be (ntime, nparticles, 2).
+    #Velocities is (ntime, nparticles, 2).
+    #We want KE to be the sum of all particles and all time steps -- ie double sum over dims 0 and 1.
+
+    normed_velos = np.linalg.norm(velos, axis=2) #norms the x and y to collapse to one value.
+    ke = 0.5 * normed_velos ** 2
+    total_ke = np.sum(ke)
+
+    return total_ke
+    
+def dissipation(delta_e, ke):
+    '''Returns the dissipation given total KE and total delE. Should be nonnegative!'''
+    g = 9.81 #just using this for testing, need to determine how to extract from models.
+    print(f"delE: {delta_e}")
+    print(f"KE: {ke}")
+    print(f"Calculated dissipation is {delta_e - ke/g}")
+    return delta_e - ke/g
