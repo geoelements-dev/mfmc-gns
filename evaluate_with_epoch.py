@@ -15,7 +15,8 @@ plot_step = 2
 noise_std = 6.7e-4
 CORRAL_MODE = False
 input_sequence_length = 6
-epochs = np.arange(0, 2000000, 100000) #(2000000, 6000000, 100000)
+epochs = np.arange(0, 1000000, 100000) #(2000000, 6000000, 100000)
+# epochs = np.array([1000000, 3000000, 5700000, 5900000])
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 if CORRAL_MODE:
@@ -24,12 +25,15 @@ if CORRAL_MODE:
     model_path = ' /corral/utexas/Material-Point-Metho/baagee/frontera/gns-mpm-data/gns-data/models/sand2d_frictions-sr020/'
     data_dir = "/corral/utexas/Material-Point-Metho/baagee/frontera/gns-mpm-data/mpm/mfmc/"
 else:
-    output_dir = './outputs'
+    # output_dir = './outputs'
+    output_dir = './outputs/new-data-testing'
     simulator_metadata_path = './gns-mpm-data/gns-data/datasets/sand2d_frictions-sr020/'
     model_path = './gns-mpm-data/gns-data/models/sand2d_frictions-sr020/'
-    data_dir = "./gns-mpm-data/mpm/mfmc"
+    # data_dir = "./gns-mpm-data/mpm/mfmc"
+    data_dir = "./gns-mpm-data/mpm/mfmc-new"
 
-output_file = 'rp_eval_0_to_2000k.pkl' #'eval_new_format-time.pkl' # 'rp_eval_0_to_2000k.pkl' 
+# output_file = 'rp_full_time_testing.pkl' #'eval_new_format-time.pkl' # 'rp_eval_0_to_2000k.pkl'
+output_file = 'rp_new_data_testing.pkl' 
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)
 
@@ -41,6 +45,10 @@ for friction_id in friction_ids:
     for a_id in aspect_ratio_ids:
         true_npz_file = f"{data_dir}/mfmc-a{a_id}-{friction_id}.npz"
         true_npz_files.append(true_npz_file)
+
+print("true_npz_files before subset selection: ", true_npz_files)
+true_npz_files = np.random.choice(true_npz_files, size=1, replace=False)
+print("selected following files to use: ", true_npz_files)
 
 # Get ground truth values
 true_data_holder = {"aspect_ratio": [], "friction": [], "runout_true": [], 
@@ -95,7 +103,9 @@ for i, epoch in enumerate(epochs):
 
         pred_runout = predicted_positions[-1, :, 0].max().item() # predicted_positions.shape = (time, nparticles, dim)
         pred_runouts.append(pred_runout)
-        pred_positions.append(predicted_positions[-1, :, :2].detach().cpu())
+        # pred_positions.append(predicted_positions[-1, :, :2].detach().cpu()) # save final timestep
+        pred_positions.append(predicted_positions[:,:,:2].detach().cpu()) #save all timesteps
+
 
     # Save data
     data_holder[f"epoch-{epoch}"] = {

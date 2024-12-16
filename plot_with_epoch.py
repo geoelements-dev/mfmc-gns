@@ -18,7 +18,8 @@ import metrics
 # output_dir = 'outputs/'
 dat_dir = './outputs'
 # filenames = ["rp_eval_0_to_2000k.pkl", "rp_eval_2000k_to_6000k.pkl"]
-filenames = ["rp_eval_0k_to_2000k_full_time.pkl", "rp_eval_2000k_to_6000k_full_time.pkl"]
+filenames = ["rp_eval_0k_to_2000k_full_time.pkl", "rp_eval_2000k_to_5000k_full_time.pkl",
+             "rp_eval_5000k_to_7000k_full_time.pkl"]
 output_dir = './outputs'
 
 # with open(f'{dat_dir}/eval-0kto2600k.pkl', 'rb') as file:
